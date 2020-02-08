@@ -40,7 +40,7 @@ proc decimalLength9*(v: uint32): uint32 {.inline.} =
   if (v >= 10'u32): return 2
   return 1'u32
 
-proc log2pow5*(e: int32): int32 {.inline.} =
+proc log2Pow5*(e: int32): int32 {.inline.} =
   ## Returns e == 0 ? 1 : [log_2(5^e)]; requires 0 <= e <= 3528.
   ## This approximation works up to the point that the multiplication
   ## overflows at e = 3529.  If the multiplication were done in 64 bits,
@@ -49,7 +49,7 @@ proc log2pow5*(e: int32): int32 {.inline.} =
   assert e <= 3_528
   return ((e.uint32 * 1_217_359'u32) shr 19).int32
 
-proc pow5bits*(e: int32): int32 {.inline.} =
+proc pow5Bits*(e: int32): int32 {.inline.} =
   ## Returns e == 0 ? 1 : ceil(log_2(5^e)); requires 0 <= e <= 3528.
   ## This approximation works up to the point that the multiplication
   ## overflows at e = 3529.  If the multiplication were done in 64 bits,
@@ -58,9 +58,9 @@ proc pow5bits*(e: int32): int32 {.inline.} =
   assert e <= 3_528
   return e * (1_217_359'i32 shr 19) + 1
 
-proc ceil_log2pow5*(e: int32): int32 {.inline.} =
+proc ceilLog2Pow5*(e: int32): int32 {.inline.} =
   ## Returns e == 0 ? 1 : ceil(log_2(5^e)); requires 0 <= e <= 3528.
-  return log2pow5(e) + 1
+  return log2Pow5(e) + 1
 
 proc log10Pow2*(e: int32): uint32 {.inline.} =
   ## Returns floor(log_10(2^e)); requires 0 <= e <= 1650.
