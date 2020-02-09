@@ -17,6 +17,8 @@
 
 #[
 
+FIXME: define this if'en we needs it
+
 #if defined(_M_IX86) || defined(_M_ARM)
 #define RYU_32_BIT_PLATFORM
 #endif

@@ -60,7 +60,7 @@ proc pow5Factor32*(value: uint32): uint32 {.inline.} =
 
 proc multipleOfPowerOf5_32*(value: uint32; p: uint32): bool {.inline.} =
   ## Returns true if value is divisible by 5^p.
-  result = pow5factor_32(value) >= p
+  result = pow5Factor32(value) >= p
 
 proc multipleOfPowerOf2_32*(value: uint32; p: uint32): bool {.inline.} =
   ## Returns true if value is divisible by 2^p.
@@ -75,8 +75,8 @@ proc mulShift32*(m: uint32; factor: uint64; shift: int32): uint32 {.inline.} =
   ## The casts here help MSVC to avoid calls to the __allmul library
   ## function.
   let
-    factorLo: uint32 = factor.uint32
-    factorHi: uint32 = factor.uint32 shr 32
+    factorLo: uint32 = uint32(factor)
+    factorHi: uint32 = uint32(factor shr 32)
     bits0: uint64 = m.uint64 * factorLo
     bits1: uint64 = m.uint64 * factorHi
 
@@ -85,9 +85,9 @@ proc mulShift32*(m: uint32; factor: uint64; shift: int32): uint32 {.inline.} =
     # need the upper 32 bits of the result and the shift value is > 32.
     let
       s: int32 = shift - 32
-      bits0Hi: uint32 = bits0.uint32 shr 32
+      bits0Hi: uint32 = uint32(bits0 shr 32)
     var
-      bits1Lo: uint32 = bits1.uint32
+      bits1Lo: uint32 = uint32(bits1)
       bits1Hi: uint32 = uint32(bits1 shr 32)
     bits1Lo += bits0Hi
     if bits1Lo < bits0Hi:
@@ -105,11 +105,12 @@ proc mulPow5InvDivPow2*(m: uint32; q: uint32; j: int32): uint32 {.inline.} =
   when defined(ryuFloatFullTable):
     result = mulShift32(m, ryuFloatPow5InvSplit[q], j)
   elif defined(ryuOptimizeSize):
-    # The inverse multipliers are defined as [2^x / 5^y] + 1; the upper 64 bits
-    # from the double lookup table are the correct bits for [2^x / 5^y], so we
-    # have to add 1 here. Note that we rely on the fact that the added 1 that's
-    # already stored in the table never overflows into the upper 64 bits.
-    let
+    # The inverse multipliers are defined as [2^x / 5^y] + 1; the upper 64
+    # bits from the double lookup table are the correct bits for [2^x /
+    # 5^y], so we have to add 1 here. Note that we rely on the fact that
+    # the added 1 that's already stored in the table never overflows into
+    # the upper 64 bits.
+    var
       pow5: seq[uint64] = @[0'u64, 0'u64]
     doubleComputeInvPow5(q, pow5)
     result = mulShift32(m, pow5[1] + 1, j)
