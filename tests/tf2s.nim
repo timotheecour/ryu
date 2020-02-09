@@ -16,36 +16,37 @@
 ## KIND, either express or implied.
 
 import std/unittest
+
 import ryu
 
 proc int32Bits2Float(bits: uint32): float32 =
   copyMem(addr result, unsafeAddr bits, sizeof(float32))
 
 # i got lazy
-template ASSERT_F2S(s: string; f: float | float32 | float64): bool =
+template ASSERT_F2S(s: string; f: float | float32 | float64) =
   check f2s(f) == s
 
 suite "float to string":
   test "basic":
     check f2s(0.0'f32) == "0E0"
     check f2s(-0.0'f32) == "-0E0"
-    check f2s(NAN) == "NaN"
-    check f2s(INFINITY) == "Infinity"
-    check f2s(-INFINITY) == "-Infinity"
-    ASSERT_F2S("0E0", 0.0);
-    ASSERT_F2S("-0E0", -0.0);
-    ASSERT_F2S("1E0", 1.0);
-    ASSERT_F2S("-1E0", -1.0);
-    ASSERT_F2S("NaN", NAN);
-    ASSERT_F2S("Infinity", INFINITY);
-    ASSERT_F2S("-Infinity", -INFINITY);
+    check f2s(0.0 / 0.0) == "NaN"
+    check f2s(0.3 / 0.0) == "Infinity"
+    check f2s(-0.3 / 0.0) == "-Infinity"
+    ASSERT_F2S("0E0", 0.0)
+    ASSERT_F2S("-0E0", -0.0)
+    ASSERT_F2S("1E0", 1.0)
+    ASSERT_F2S("-1E0", -1.0)
+    ASSERT_F2S("NaN", NAN)
+    ASSERT_F2S("Infinity", 0.3 / 0.0)
+    ASSERT_F2S("-Infinity", -0.3 / 0.0)
 
   test "switch to subnormal":
     check f2s(1.1754944E-38'f32) == "1.1754944E-38"
     ASSERT_F2S("1.1754944E-38", 1.1754944E-38f)
 
   test "min and max":
-    check int32Bits2Float(0x7f7ffffff).f2s == "3.4028235E38"
+    check int32Bits2Float(0x7f7fffff).f2s == "3.4028235E38"
     check int32Bits2Float(1).f2s == "1E-45"
     ASSERT_F2S("3.4028235E38", int32Bits2Float(0x7f7fffff))
     ASSERT_F2S("1E-45", int32Bits2Float(1))
