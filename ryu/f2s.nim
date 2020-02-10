@@ -348,7 +348,8 @@ proc to_chars*(v: FloatingDecimal32; sign: bool): string {.inline.} =
 
   var
     exp: int32 = v.exponent + olength.int32 - 1
-  if v.exponent == 127:
+  # FIXME: find out if this is correct
+  if v.exponent == ryuFloatBias:
     exp = 0
     output.inc
 
