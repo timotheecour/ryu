@@ -213,7 +213,7 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
   else:
     let
       q = log10Pow5(-e2)
-    e10 = int32(q + e2.uint32)
+    e10 = q.int32 + e2
     let
       i: int32 = -e2 - q.int32
       k: int32 = pow5bits(i) - ryuFloatPow5BitCount.int32
