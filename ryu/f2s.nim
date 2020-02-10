@@ -36,7 +36,7 @@ else:
 
 const
   ryuFloatMantissaBits* = 23
-  ryuFloatMantissaBitMask* = 0b111111111111111111111111
+  ryuFloatMantissaBitMask* = 0b11111111111111111111111
   ryuFloatExponentBits* = 8
   ryuFloatExponentBitMask* = 0b11111111
   ryuFloatBias* = 127

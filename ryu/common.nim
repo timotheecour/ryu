@@ -85,11 +85,10 @@ proc specialStr*(sign, exponent, mantissa: bool): string =
     if sign: "-" & s else: s
   if mantissa:
     result = "NaN"
+  elif exponent:
+    result = signed "Infinity"
   else:
-    if exponent:
-      result = signed "Infinity"
-    else:
-      result = signed "0E0"
+    result = signed "0E0"
 
 proc copySpecialStr*(buff: var string; sign, exponent, mantissa: bool): int =
   buff = specialStr(sign, exponent, mantissa)
