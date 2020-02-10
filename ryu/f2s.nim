@@ -142,8 +142,8 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
     e2 = int32(1 - ryuFloatBias - ryuFloatMantissaBits - 2)
     m2 = ieeeMantissa
   else:
-    e2 = ieeeExponent.int32 - ryuFloatBias - ryuFloatMantissaBits - 2
-    m2 = ryuFloatMantissaBitMask.uint32 or ieeeMantissa
+    e2 = int32(ieeeExponent - ryuFloatBias - ryuFloatMantissaBits - 2)
+    m2 = ieeeMantissa or ryuFloatMantissaBitMask
   let
     even = (m2 and 1) == 0
     acceptBounds = even
@@ -346,13 +346,20 @@ proc to_chars*(v: FloatingDecimal32; sign: bool): string {.inline.} =
   let
     olength: uint32 = decimalLength9(output)
 
+  var
+    exp: int32 = v.exponent + olength.int32 - 1
+  if v.exponent == 127:
+    exp = 0
+    output.inc
+
   if sign:
     result = "-"
     index.inc
 
   # ensure our output string is the right size
   echo "result len is ", result.len
-  result.setLen olength.int + result.len + 3
+  # added some digits for sign, period, E, etc.
+  result.setLen olength.int + 4
   echo "result len NOW ", result.len
 
   when defined(ryuDebug):
@@ -415,8 +422,7 @@ proc to_chars*(v: FloatingDecimal32; sign: bool): string {.inline.} =
   # Print the exponent.
   result[index] = 'E'
   index.inc
-  var
-    exp: int32 = v.exponent + olength.int32 - 1
+
   if exp < 0:
     result[index] = '-'
     index.inc
@@ -465,3 +471,5 @@ proc f2s*(f: float): string =
       v = FloatingDecimal32(mantissa: ieeeMantissa,
                             exponent: ieeeExponent.int32)
     result = to_chars(v, ieeeSign)
+  when defined(ryuDebug):
+    echo "---> F2S OUTPUT --->", result, "<---"
