@@ -15,6 +15,8 @@
 ## is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 ## KIND, either express or implied.
 
+import std/strutils
+
 #[
 
 FIXME: define this if'en we needs it
@@ -94,6 +96,8 @@ proc copySpecialStr*(buff: var string; sign, exponent, mantissa: bool): int =
 
 proc floatToBits*(f: float32): uint32 {.inline.} =
   copyMem(addr result, unsafeAddr f, sizeof(float32))
+  when defined(ryuDebug):
+    echo f, " floatToBits ", result.BiggestInt.toBin(32)
 
 proc doubleToBits*(f: float64): uint64 {.inline.} =
   copyMem(addr result, unsafeAddr f, sizeof(float64))
