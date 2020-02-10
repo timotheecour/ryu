@@ -16,7 +16,6 @@
 ## KIND, either express or implied.
 
 import std/unittest
-import std/strutils
 
 import ryu
 
@@ -25,7 +24,7 @@ proc int32Bits2Float(bits: uint32): float32 =
 
 # i got lazy
 template ASSERT_F2S(s: string; f: float | float32 | float64) =
-  check f2s(f).strip(chars = {'\0'}) == s
+  check f2s(f) == s
 
 suite "float to string":
   test "really basic":

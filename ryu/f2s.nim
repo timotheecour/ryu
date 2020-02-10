@@ -472,5 +472,7 @@ proc f2s*(f: float): string =
       v = FloatingDecimal32(mantissa: ieeeMantissa,
                             exponent: ieeeExponent.int32)
     result = to_chars(v, ieeeSign)
+  {.warning: "fix this strip later".}
+  result = strip(result, chars = {'\0'})
   when defined(ryuDebug):
     echo "---> F2S OUTPUT --->", result, "<---"
