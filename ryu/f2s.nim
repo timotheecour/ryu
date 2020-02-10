@@ -346,13 +346,6 @@ proc to_chars*(v: FloatingDecimal32; sign: bool): string {.inline.} =
   let
     olength: uint32 = decimalLength9(output)
 
-  var
-    exp: int32 = v.exponent + olength.int32 - 1
-  # FIXME: find out if this is correct
-  if v.exponent == ryuFloatBias:
-    exp = 0
-    output.inc
-
   if sign:
     result = "-"
     index.inc
@@ -424,6 +417,8 @@ proc to_chars*(v: FloatingDecimal32; sign: bool): string {.inline.} =
   result[index] = 'E'
   index.inc
 
+  var
+    exp: int32 = v.exponent + olength.int32 - 1
   if exp < 0:
     result[index] = '-'
     index.inc
@@ -447,7 +442,7 @@ proc f2s*(f: float): string =
   # Step 1: Decode the floating-point number, and unify normalized and
   # subnormal cases.
   let
-    bits: uint32 = float_to_bits(f)
+    bits: uint32 = floatToBits(f)
 
   when defined(ryuDebug):
     var
@@ -469,8 +464,7 @@ proc f2s*(f: float): string =
     result = specialStr(ieeeSign, ieeeExponent != 0, ieeeMantissa != 0)
   else:
     let
-      v = FloatingDecimal32(mantissa: ieeeMantissa,
-                            exponent: ieeeExponent.int32)
+      v = f2d(ieeeMantissa, ieeeExponent)
     result = to_chars(v, ieeeSign)
   {.warning: "fix this strip later".}
   result = strip(result, chars = {'\0'})
