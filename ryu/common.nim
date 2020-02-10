@@ -101,3 +101,5 @@ proc floatToBits*(f: float32): uint32 {.inline.} =
 
 proc doubleToBits*(f: float64): uint64 {.inline.} =
   copyMem(addr result, unsafeAddr f, sizeof(float64))
+  when defined(ryuDebug):
+    echo f, " doubleToBits ", result.BiggestInt.toBin(64)
