@@ -218,7 +218,7 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
       i: int32 = -e2 - q.int32
       k: int32 = pow5bits(i) - ryuFloatPow5BitCount.int32
     var
-      j: int32 = int32(q - k.uint32)
+      j: int32 = q.int32 - k
     vr = mulPow5divPow2(mv, i.uint32, j)
     vp = mulPow5divPow2(mp, i.uint32, j)
     vm = mulPow5divPow2(mm, i.uint32, j)
