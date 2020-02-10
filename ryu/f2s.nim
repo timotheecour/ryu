@@ -451,7 +451,7 @@ proc f2s*(f: float): string =
   let
     ieeeSign: bool = ((bits shr (ryuFloatMantissaBits + ryuFloatExponentBits)) and 1) != 0
     ieeeMantissa: uint32 = bits and ryuFloatMantissaBitMask.uint32
-    ieeeExponent: uint32 = (bits shr ryuFloatExponentBits) and ryuFloatExponentBitMask
+    ieeeExponent: uint32 = (bits shr ryuFloatMantissaBits) and ryuFloatExponentBitMask
 
   # Case distinction; exit early for the easy cases.
   if ieeeExponent == ryuFloatExponentBitMask or (ieeeExponent == 0 and ieeeMantissa == 0):
