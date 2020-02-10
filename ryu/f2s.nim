@@ -35,9 +35,11 @@ else:
     ryuFloatPow5BitCount* = ryuDoublePow5BitCount - 64
 
 const
-  ryuFloatMantissaBits* {.intdefine.} = 23
-  ryuFloatExponentBits* {.intdefine.} = 8
-  ryuFloatBias* {.intdefine.} = 127
+  ryuFloatMantissaBits* = 23
+  ryuFloatMantissaBitMask* = 0b111111111111111111111111
+  ryuFloatExponentBits* = 8
+  ryuFloatExponentBitMask* = 0b11111111
+  ryuFloatBias* = 127
 
 type
   ## A floating decimal representing m * 10^e.
@@ -141,7 +143,7 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
     m2 = ieeeMantissa
   else:
     e2 = ieeeExponent.int32 - ryuFloatBias - ryuFloatMantissaBits - 2
-    m2 = (1'u32 shl ryuFloatMantissaBits) or ieeeMantissa
+    m2 = ryuFloatMantissaBitMask.uint32 or ieeeMantissa
   let
     even = (m2 and 1) == 0
     acceptBounds = even
@@ -448,11 +450,11 @@ proc f2s*(f: float): string =
   # Decode bits into sign, mantissa, and exponent.
   let
     ieeeSign: bool = ((bits shr (ryuFloatMantissaBits + ryuFloatExponentBits)) and 1) != 0
-    ieeeMantissa: uint32 = bits and ((1'u32 shl ryuFloatMantissaBits) - 1)
-    ieeeExponent: uint32 = (bits shr ryuFloatMantissaBits) and ((1'u32 shl ryuFloatExponentBits) - 1)
+    ieeeMantissa: uint32 = bits and ryuFloatMantissaBitMask.uint32
+    ieeeExponent: uint32 = (bits shr ryuFloatExponentBits) and ryuFloatExponentBitMask
 
   # Case distinction; exit early for the easy cases.
-  if ieeeExponent == ((1'u32 shl ryuFloatExponentBits) - 1'u32) or (ieeeExponent == 0 and ieeeMantissa == 0):
+  if ieeeExponent == ryuFloatExponentBitMask or (ieeeExponent == 0 and ieeeMantissa == 0):
     result = specialStr(ieeeSign, ieeeExponent != 0, ieeeMantissa != 0)
   else:
     let
