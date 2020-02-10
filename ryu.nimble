@@ -21,3 +21,4 @@ proc execTest(test: string) =
 task test, "run tests for travis":
   execTest("tests/tcommon.nim")
   execTest("tests/tf2s.nim")
+  execTest("tests/td2s_table.nim")

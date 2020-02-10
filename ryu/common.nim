@@ -80,17 +80,20 @@ proc log10Pow5*(e: int32): uint32 {.inline.} =
   assert e <= 2620
   return (e.uint32 * 732923) shr 20
 
-proc copySpecialStr*(buff: var string; sign, exponent, mantissa: bool): int =
+proc specialStr*(sign, exponent, mantissa: bool): string =
+  template signed(s: string): string =
+    if sign: "-" & s else: s
   if mantissa:
-    buff = "NaN"
-    return 3
-  if sign:
-    buff = "-"
-  if exponent:
-    buff.add "Infinity"
+    result = "NaN"
   else:
-    buff &= "0E0"
-  return buff.len
+    if exponent:
+      result = signed "Infinity"
+    else:
+      result = signed "0E0"
+
+proc copySpecialStr*(buff: var string; sign, exponent, mantissa: bool): int =
+  buff = specialStr(sign, exponent, mantissa)
+  result = buff.len
 
 proc floatToBits*(f: float32): uint32 {.inline.} =
   copyMem(addr result, unsafeAddr f, sizeof(float32))

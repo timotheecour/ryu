@@ -18,6 +18,8 @@
 ## Runtime compiler options:
 ## -DRYU_DEBUG Generate verbose debugging output to stdout.
 
+import std/strutils
+
 import ryu/common
 import ryu/digit_table
 
@@ -145,7 +147,7 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
     acceptBounds = even
 
   when defined(ryuDebug):
-    echo "-> $# * 2^$#" % [m2, e2 + 2]
+    echo "-> $# * 2^$#" % [$m2, $(e2 + 2)]
 
   # Step 2: Determine the interval of valid decimal representations.
   let
@@ -183,8 +185,8 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
     vm = mulPow5InvDivPow2(mm, q, i)
 
     when defined(ryuDebug):
-      echo "$# * 2^$# / 10^$#" % [mv, e2, q]
-      echo "V+=$#\nV =$#\nV-=$#" % [vp, vr, vm]
+      echo "$# * 2^$# / 10^$#" % [$mv, $e2, $q]
+      echo "V+=$#\nV =$#\nV-=$#" % [$vp, $vr, $vm]
 
     if q != 0 and (vp - 1) div 10'u32 <= vm div 10'u32:
       # We need to know one removed digit even if we are not going to loop
@@ -219,9 +221,9 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
     vp = mulPow5divPow2(mp, i.uint32, j)
     vm = mulPow5divPow2(mm, i.uint32, j)
     when defined(ryuDebug):
-      echo "$# * 5^$# / 10^$#" % [mv, -e2, q]
-      echo "$# $# $# $#" % [q, i, k, j]
-      echo "V+=$#\nV =$#\nV-=$#" % [vp, vr, vm]
+      echo "$# * 5^$# / 10^$#" % [$mv, $(-e2), $q]
+      echo "$# $# $# $#" % [$q, $i, $k, $j]
+      echo "V+=$#\nV =$#\nV-=$#" % [$vp, $vr, $vm]
 
     if q != 0 and (vp - 1) div 10 <= vm div 10:
       j = int32(q - 1 - (pow5bits(i + 1) - ryuFloatPow5BitCount).uint32)
@@ -244,7 +246,7 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
 
   when defined(ryuDebug):
     echo "e10=", e10
-    echo "V+=$#\nV =$#\nV-=$#" % [vp, vr, vm]
+    echo "V+=$#\nV =$#\nV-=$#" % [$vp, $vr, $vm]
     echo "vm is trailing zeros=", vmIsTrailingZeros
     echo "vr is trailing zeros=", vrIsTrailingZeros
 
@@ -277,7 +279,7 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
       removed.inc
 
     when defined(ryuDebug):
-      echo "V+=$#\nV =$#\nV-=$#" % [vp, vr, vm]
+      echo "V+=$#\nV =$#\nV-=$#" % [$vp, $vr, $vm]
       echo "d-10=", vmIsTrailingZeros
 
     if vmIsTrailingZeros:
@@ -328,28 +330,33 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
     exp: int32 = e10 + removed
 
   when defined(ryuDebug):
-    echo "V+=$#\nV =$#\nV-=$#" % [vp, vr, vm]
+    echo "V+=$#\nV =$#\nV-=$#" % [$vp, $vr, $vm]
     echo "O=", output
     echo "EXP=", exp
 
-  return FloatingDecimal32(exponent: exp, mantissa: output)
+  result = FloatingDecimal32(exponent: exp, mantissa: output)
 
-proc to_chars*(v: FloatingDecimal32; sign: bool; chars: var string): int
-  {.inline.} =
+proc to_chars*(v: FloatingDecimal32; sign: bool): string {.inline.} =
   # Step 5: Print the decimal representation.
   var
     index = 0
     output: uint32 = v.mantissa
   let
     olength: uint32 = decimalLength9(output)
+
   if sign:
-    chars = "-"
+    result = "-"
     index.inc
+
+  # ensure our output string is the right size
+  echo "result len is ", result.len
+  result.setLen olength.int + result.len + 3
+  echo "result len NOW ", result.len
 
   when defined(ryuDebug):
     echo "DIGITS=", v.mantissa
     echo "OLEN=", olength
-    echo "EXP=", v.exponent + olength
+    echo "EXP=", v.exponent
 
   ## Print the decimal digits.
   ## The following code is equivalent to:
@@ -370,59 +377,60 @@ proc to_chars*(v: FloatingDecimal32; sign: bool; chars: var string): int
       output - 10_000 * (output div 10_000)
     else:
       output mod 10_000
-
     output = output div 10_000
-
     let
       c0: uint32 = (c mod 100) shl 1
       c1: uint32 = (c div 100) shl 1
-    chars[index + olength.int - i.int - 1] = ryuDigitTable[c0 + 0]
-    chars[index + olength.int - i.int - 0] = ryuDigitTable[c0 + 1]
-    chars[index + olength.int - i.int - 3] = ryuDigitTable[c1 + 0]
-    chars[index + olength.int - i.int - 2] = ryuDigitTable[c1 + 1]
+    result[index + olength.int - i.int - 1] = ryuDigitTable[c0 + 0]
+    result[index + olength.int - i.int - 0] = ryuDigitTable[c0 + 1]
+    result[index + olength.int - i.int - 3] = ryuDigitTable[c1 + 0]
+    result[index + olength.int - i.int - 2] = ryuDigitTable[c1 + 1]
     i += 4
 
   if output >= 100'u32:
     let c: uint32 = (output mod 100) shl 1
     output = output div 100
-    chars[index + olength.int - i.int - 1] = ryuDigitTable[c + 0]
-    chars[index + olength.int - i.int - 0] = ryuDigitTable[c + 1]
+    result[index + olength.int - i.int - 1] = ryuDigitTable[c + 0]
+    result[index + olength.int - i.int - 0] = ryuDigitTable[c + 1]
     i += 2
+
   if output >= 10'u32:
     let c: uint32 = output shl 1
-    # We can't use memcpy here: the decimal dot goes between these two digits.
-    chars[index + olength.int - i.int] = ryuDigitTable[c + 1]
-    chars[index] = ryuDigitTable[c]
+    # We can't use memcpy here: the decimal dot goes between these two
+    # digits.
+    result[index + olength.int - i.int] = ryuDigitTable[c + 1]
+    result[index] = ryuDigitTable[c]
   else:
-    chars[index] = chr('0'.ord + output.int)
+    result[index] = chr('0'.ord + output.int)
 
   # Print decimal point if needed.
   if olength > 1'u32:
-    chars[index + 1] = '.'
+    result[index + 1] = '.'
     index += olength.int + 1
   else:
     index.inc
 
   # Print the exponent.
-  chars[index] = 'E'
+  result[index] = 'E'
   index.inc
   var
     exp: int32 = v.exponent + olength.int32 - 1
   if exp < 0:
-    chars[index] = '-'
+    result[index] = '-'
     index.inc
     exp = -exp
 
+  echo "result.len", result.len, " index", index
+  echo "olength", olength, " i", i, " exp", exp
   if exp >= 10:
-    chars[index + 0] = ryuDigitTable[2 * exp + 0]
-    chars[index + 1] = ryuDigitTable[2 * exp + 1]
+    result[index + 0] = ryuDigitTable[2 * exp + 0]
+    result[index + 1] = ryuDigitTable[2 * exp + 1]
     index += 2
   else:
-    chars[index] = chr('0'.ord + exp)
+    result[index] = chr('0'.ord + exp)
     index.inc
-  return index
 
-proc f2s_buffered_n(f: float; chars: var string): int =
+proc f2s*(f: float): string =
   # Step 1: Decode the floating-point number, and unify normalized and
   # subnormal cases.
   let
@@ -441,26 +449,13 @@ proc f2s_buffered_n(f: float; chars: var string): int =
   let
     ieeeSign: bool = ((bits shr (ryuFloatMantissaBits + ryuFloatExponentBits)) and 1) != 0
     ieeeMantissa: uint32 = bits and ((1'u32 shl ryuFloatMantissaBits) - 1)
-    ieeeExponent: uint32 = bits shr ryuFloatMantissaBits and ((1'u32 shl ryuFloatExponentBits) - 1)
+    ieeeExponent: uint32 = (bits shr ryuFloatMantissaBits) and ((1'u32 shl ryuFloatExponentBits) - 1)
 
   # Case distinction; exit early for the easy cases.
   if ieeeExponent == ((1'u32 shl ryuFloatExponentBits) - 1'u32) or (ieeeExponent == 0 and ieeeMantissa == 0):
-    return copy_special_str(chars, ieeeSign,
-                            ieeeExponent != 0,
-                            ieeeMantissa != 0)
-
-  let
-    v = FloatingDecimal32(mantissa: ieeeMantissa,
-                          exponent: ieeeExponent.int32)
-  return to_chars(v, ieeeSign, chars)
-
-proc f2s_buffered(f: float; chars: var string) =
-  let
-    index = f2s_buffered_n(f, chars)
-
-  # Terminate the string.
-  chars[index] = '\0'
-
-proc f2s*(f: float): string =
-  result.setLen 16
-  f2s_buffered(f, result)
+    result = specialStr(ieeeSign, ieeeExponent != 0, ieeeMantissa != 0)
+  else:
+    let
+      v = FloatingDecimal32(mantissa: ieeeMantissa,
+                            exponent: ieeeExponent.int32)
+    result = to_chars(v, ieeeSign)
