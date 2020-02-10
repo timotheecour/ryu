@@ -10,13 +10,13 @@ proc execCmd(cmd: string) =
 
 proc execTest(test: string) =
   execCmd "nim c           -f --path=. -r " & test
-  execCmd "nim c   -d:release --path=. -r " & test
-  execCmd "nim c   -d:danger  --path=. -r " & test
-  execCmd "nim cpp            --path=. -r " & test
-  execCmd "nim cpp -d:danger  --path=. -r " & test
-  when NimMajor >= 1 and NimMinor >= 1:
-    execCmd "nim c   --gc:arc --path=. -r " & test
-    execCmd "nim cpp --gc:arc --path=. -r " & test
+  #execCmd "nim c   -d:release --path=. -r " & test
+  #execCmd "nim c   -d:danger  --path=. -r " & test
+  #execCmd "nim cpp            --path=. -r " & test
+  #execCmd "nim cpp -d:danger  --path=. -r " & test
+  #when NimMajor >= 1 and NimMinor >= 1:
+  #  execCmd "nim c   --gc:arc --path=. -r " & test
+  #  execCmd "nim cpp --gc:arc --path=. -r " & test
 
 task test, "run tests for travis":
   #execTest("tests/tcommon.nim")

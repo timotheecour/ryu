@@ -36,9 +36,9 @@ else:
 
 const
   ryuFloatMantissaBits* = 23
-  ryuFloatMantissaBitMask* = 0b11111111111111111111111
+  ryuFloatMantissaBitMask* = 0b00000000011111111111111111111111
   ryuFloatExponentBits* = 8
-  ryuFloatExponentBitMask* = 0b11111111
+  ryuFloatExponentBitMask* = 0b011111111
   ryuFloatBias* = 127
 
 type
@@ -83,6 +83,8 @@ proc mulShift32*(m: uint32; factor: uint64; shift: int32): uint32 {.inline.} =
     factorHi: uint32 = uint32(factor shr 32)
     bits0: uint64 = m.uint64 * factorLo
     bits1: uint64 = m.uint64 * factorHi
+  when defined(ryuDebug):
+    echo "factorLo $# factorHi $# bits0 $# bits1 $# " % [$factorLo, $factorHi, $bits0, $bits1]
 
   when defined(ryu32BitPlatform):
     # On 32-bit platforms we can avoid a 64-bit shift-right since we only
@@ -102,6 +104,8 @@ proc mulShift32*(m: uint32; factor: uint64; shift: int32): uint32 {.inline.} =
     let
       sum: uint64 = (bits0 shr 32) + bits1
       shiftedSum: uint64 = sum shr (shift - 32)
+    if shiftedSum > uint64(uint32.high):
+      raise newException(AssertionError, "shiftedSum of $# > $#; sum was $#; shift of $#" % [$shiftedSum, $uint32.high, $sum, $shift])
     assert shiftedSum <= uint32.high
     result = shiftedSum.uint32
 
@@ -130,6 +134,8 @@ proc mulPow5DivPow2*(m: uint32; i: uint32; j: int32): uint32 {.inline.} =
     doubleComputePow5(q, pow5)
     result = mulShift32(m, pow5[1], j)
   else:
+    when defined(ryuDebug):
+      echo "mul m$# i$# t$# j$#" % [ $m, $i, $ryuDoublePow5Split[i][1], $j ]
     result = mulShift32(m, ryuDoublePow5Split[i][1], j)
 
 proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
@@ -137,13 +143,19 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
   var
     e2: int32
     m2: uint32
+  when defined(ryuDebug):
+    echo "EXP $# MANTISSA $#" % [$ieeeExponent, $ieeeMantissa]
   if ieeeExponent == 0:
     # We subtract 2 so that the bounds computation has 2 additional bits.
-    e2 = int32(1 - ryuFloatBias - ryuFloatMantissaBits - 2)
+    #e2 = 1 - ryuFloatBias - ryuFloatMantissaBits - 2
+    e2 = 1 - ryuFloatBias - 2
     m2 = ieeeMantissa
   else:
-    e2 = int32(ieeeExponent - ryuFloatBias - ryuFloatMantissaBits - 2)
-    m2 = ieeeMantissa or ryuFloatMantissaBitMask
+    #e2 = ieeeExponent.int32 - ryuFloatBias - ryuFloatMantissaBits - 2
+    e2 = ieeeExponent.int32 - ryuFloatBias - 2
+    #m2 = ieeeMantissa or (1'u32 shl ryuFloatMantissaBits)
+    m2 = ieeeMantissa and ryuFloatMantissaBits
+    echo "--ORED--", $m2
   let
     even = (m2 and 1) == 0
     acceptBounds = even
@@ -338,7 +350,7 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
 
   result = FloatingDecimal32(exponent: exp, mantissa: output)
 
-proc to_chars*(v: FloatingDecimal32; sign: bool): string {.inline.} =
+proc toChars*(v: FloatingDecimal32; sign: bool): string {.inline.} =
   # Step 5: Print the decimal representation.
   var
     index = 0
@@ -465,7 +477,7 @@ proc f2s*(f: float): string =
   else:
     let
       v = f2d(ieeeMantissa, ieeeExponent)
-    result = to_chars(v, ieeeSign)
+    result = toChars(v, ieeeSign)
   {.warning: "fix this strip later".}
   result = strip(result, chars = {'\0'})
   when defined(ryuDebug):
