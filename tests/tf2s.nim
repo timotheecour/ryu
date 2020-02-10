@@ -27,7 +27,7 @@ template ASSERT_F2S(s: string; f: float | float32 | float64) =
   check f2s(f) == s
 
 suite "float to string":
-  test "basic":
+  test "really basic":
     check f2s(0.0'f32) == "0E0"
     check f2s(-0.0'f32) == "-0E0"
     check f2s(0.0 / 0.0) == "NaN"
@@ -35,7 +35,11 @@ suite "float to string":
     check f2s(-0.3 / 0.0) == "-Infinity"
     ASSERT_F2S("0E0", 0.0)
     ASSERT_F2S("-0E0", -0.0)
+
+  test "basically broken":
     ASSERT_F2S("1E0", 1.0)
+
+  test "basic":
     ASSERT_F2S("-1E0", -1.0)
     ASSERT_F2S("NaN", NAN)
     ASSERT_F2S("Infinity", 0.3 / 0.0)

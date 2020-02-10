@@ -425,6 +425,10 @@ proc to_chars*(v: FloatingDecimal32; sign: bool): string {.inline.} =
   echo "result.len", result.len, " index", index
   echo "olength", olength, " i", i, " exp", exp
   if exp >= 10:
+    # digit table is an array[200, char] that looks like this:
+    #    '0', '0'
+    #    '0', '1'
+    #    '0', '2'
     result[index + 0] = ryuDigitTable[2 * exp + 0]
     result[index + 1] = ryuDigitTable[2 * exp + 1]
     index += 2

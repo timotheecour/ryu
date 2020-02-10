@@ -19,6 +19,6 @@ proc execTest(test: string) =
     execCmd "nim cpp --gc:arc --path=. -r " & test
 
 task test, "run tests for travis":
-  execTest("tests/tcommon.nim")
+  #execTest("tests/tcommon.nim")
   execTest("tests/tf2s.nim")
-  execTest("tests/td2s_table.nim")
+  #execTest("tests/td2s_table.nim")
