@@ -80,15 +80,13 @@ proc log10Pow5*(e: int32): uint32 {.inline.} =
   assert e <= 2620
   return (e.uint32 * 732923) shr 20
 
-proc specialStr*(sign, exponent, mantissa: bool): string =
-  template signed(s: string): string =
-    if sign: "-" & s else: s
+proc specialStr*(sign, exponent, mantissa: bool): string {.inline.} =
   if mantissa:
     result = "NaN"
   elif exponent:
-    result = signed "Infinity"
+    result = if sign: "-Infinity" else: "Infinity"
   else:
-    result = signed "0E0"
+    result = if sign: "-0E0" else: "0E0"
 
 proc copySpecialStr*(buff: var string; sign, exponent, mantissa: bool): int =
   buff = specialStr(sign, exponent, mantissa)
