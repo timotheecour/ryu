@@ -361,7 +361,7 @@ proc toChars*(v: FloatingDecimal32; sign: bool): string {.inline.} =
   # ensure our output string is the right size
   echo "result len is ", result.len
   # added some digits for sign, period, E, etc.
-  result.setLen olength.int + 4
+  result.setLen olength.int + 6
   echo "result len NOW ", result.len
 
   when defined(ryuDebug):
