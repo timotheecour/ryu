@@ -60,7 +60,7 @@ proc pow5Bits*(e: int32): int32 {.inline.} =
   ## it would fail at 5^4004 which is just greater than 2^9297.
   assert e >= 0
   assert e <= 3_528
-  return e * (1_217_359'i32 shr 19) + 1
+  return int32((e.uint32 * 1_217_359) shr 19) + 1
 
 proc ceilLog2Pow5*(e: int32): int32 {.inline.} =
   ## Returns e == 0 ? 1 : ceil(log_2(5^e)); requires 0 <= e <= 3528.

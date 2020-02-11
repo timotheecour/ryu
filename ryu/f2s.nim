@@ -147,15 +147,11 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
     echo "EXP $# MANTISSA $#" % [$ieeeExponent, $ieeeMantissa]
   if ieeeExponent == 0:
     # We subtract 2 so that the bounds computation has 2 additional bits.
-    #e2 = 1 - ryuFloatBias - ryuFloatMantissaBits - 2
-    e2 = 1 - ryuFloatBias - 2
+    e2 = 1 - ryuFloatBias - ryuFloatMantissaBits - 2
     m2 = ieeeMantissa
   else:
-    #e2 = ieeeExponent.int32 - ryuFloatBias - ryuFloatMantissaBits - 2
-    e2 = ieeeExponent.int32 - ryuFloatBias - 2
-    #m2 = ieeeMantissa or (1'u32 shl ryuFloatMantissaBits)
-    m2 = ieeeMantissa and ryuFloatMantissaBits
-    echo "--ORED--", $m2
+    e2 = ieeeExponent.int32 - ryuFloatBias - ryuFloatMantissaBits - 2
+    m2 = (1'u32 shl ryuFloatMantissaBits) or ieeeMantissa
   let
     even = (m2 and 1) == 0
     acceptBounds = even
@@ -165,8 +161,8 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
 
   # Step 2: Determine the interval of valid decimal representations.
   let
-    mv: uint32 = 4'u32 * m2
-    mp: uint32 = 4'u32 * m2 + 2
+    mv: uint32 = m2 * 4
+    mp: uint32 = m2 * 4 + 2
   #[
     // Implicit bool -> int conversion. True is 1, false is 0.
 
@@ -178,7 +174,7 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
         1
       else:
         0
-    mm: uint32 = 4'u32 * m2 - 1 - mmShift
+    mm: uint32 = m2 * 4 - 1 - mmShift
 
   # Step 3: Convert to a decimal power base using 64-bit arithmetic.
   var
@@ -208,7 +204,7 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
       # for the result, and we've found that 32-bit arithmetic is faster even
       # on 64-bit machines.
       let
-        l: int32 = ryuFloatPow5InvBitCount.int32 + pow5bits((q - 1).int32) - 1
+        l: int32 = ryuFloatPow5InvBitCount.int32 + pow5bits(int32(q - 1)) - 1
       lastRemovedDigit = uint8(mulPow5InvDivPow2(mv, q - 1,
                                                  -e2 + q.int32 - 1 + l) mod 10)
 
@@ -236,7 +232,7 @@ proc f2d*(ieeeMantissa: uint32; ieeeExponent: uint32): FloatingDecimal32
     vm = mulPow5divPow2(mm, i.uint32, j)
     when defined(ryuDebug):
       echo "$# * 5^$# / 10^$#" % [$mv, $(-e2), $q]
-      echo "$# $# $# $#" % [$q, $i, $k, $j]
+      echo "q$# i$# k$# j$#" % [$q, $i, $k, $j]
       echo "V+=$#\nV =$#\nV-=$#" % [$vp, $vr, $vm]
 
     if q != 0 and (vp - 1) div 10 <= vm div 10:
@@ -455,15 +451,6 @@ proc f2s*(f: float): string =
   # subnormal cases.
   let
     bits: uint32 = floatToBits(f)
-
-  when defined(ryuDebug):
-    var
-      msg = "IN="
-      bit: int32 = 31
-    while bit >= 0:
-      msg &= $((bits shr bit) and 1)
-      bit.dec
-    echo msg
 
   # Decode bits into sign, mantissa, and exponent.
   let
